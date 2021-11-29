@@ -1,0 +1,5 @@
+---
+- include_tasks: precheck.yml
+- include_tasks: "{{ ansible_facts.pkg_mgr }}/main.yml"
+
+

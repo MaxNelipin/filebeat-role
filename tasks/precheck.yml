@@ -1,0 +1,5 @@
+---
+- name: Checked supported system
+  fail:
+    msg: "System {{ ansible_distribution }} is not support"
+  when: ansible_distribution not in supported_systems

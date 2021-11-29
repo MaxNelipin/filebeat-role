@@ -1,0 +1,4 @@
+---
+filebeat_version: "7.15.0"
+el_instanse_ip: "{{ hostvars['el-instance']['ansible_facts']['default_ipv4']['address'] }}"
+kb_instance_ip: "{{ hostvars['kb-instance']['ansible_facts']['default_ipv4']['address'] }}"
