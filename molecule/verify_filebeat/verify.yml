@@ -1,0 +1,143 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    el_instance_ip: "51.250.1.224"
+  tasks:
+  - name: Print returned json dictionary
+    debug:
+      var: variables['ansible_facts']
+  - name: Copy test log
+    copy:
+      src: "/var/log/auth.log"
+      mode: 0644
+      dest: "/var/log/auth.log"
+  - name: start kibana
+    shell: nohup /usr/share/filebeat/bin/filebeat </dev/null >/dev/null 2>&1 &
+    changed_when: false
+  - name: Wait for send data to Elastic
+    wait_for:
+      timeout: 10
+  - name: Get data from Elastic
+    uri:
+      url: "http://{{ el_instance_ip }}:9200/_search?pretty"
+      method: GET
+      return_content: yes
+      status_code: 200
+      body_format: json
+      headers:
+        Content-Type: application/json
+      body: '{
+  "aggs": {
+    "2": {
+      "terms": {
+        "field": "system.auth.sudo.command",
+        "order": {
+          "_count": "desc"
+        },
+        "size": 5
+      },
+      "aggs": {
+        "3": {
+          "terms": {
+            "field": "user.name",
+            "order": {
+              "_count": "desc"
+            },
+            "size": 5
+          }
+        }
+      }
+    }
+  },
+  "size": 0,
+  "fields": [
+    {
+      "field": "@timestamp",
+      "format": "date_time"
+    },
+    {
+      "field": "event.created",
+      "format": "date_time"
+    },
+    {
+      "field": "event.end",
+      "format": "date_time"
+    },
+    {
+      "field": "event.ingested",
+      "format": "date_time"
+    },
+    {
+      "field": "event.start",
+      "format": "date_time"
+    },
+    {
+      "field": "file.accessed",
+      "format": "date_time"
+    },
+    {
+      "field": "file.created",
+      "format": "date_time"
+    },
+    {
+      "field": "file.ctime",
+      "format": "date_time"
+    },
+    {
+      "field": "file.mtime",
+      "format": "date_time"
+    }
+  ],
+  "script_fields": {},
+  "stored_fields": [
+    "*"
+  ],
+  "runtime_mappings": {},
+  "_source": {
+    "excludes": []
+  },
+  "query": {
+    "bool": {
+      "must": [],
+      "filter": [
+        {
+          "bool": {
+            "should": [
+              {
+                "exists": {
+                  "field": "system.auth.sudo"
+                }
+              }
+            ],
+            "minimum_should_match": 1
+          }
+        },
+        {
+          "match_phrase": {
+            "user.name": "maxn"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "2021-12-05T13:00:00.000Z",
+              "format": "strict_date_optional_time"
+            }
+          }
+        }
+      ],
+      "should": [],
+      "must_not": []
+    }
+  }
+}'
+
+    register: result_data
+ # - name: Print returned json dictionary
+   # debug:
+     # var: result_data.json['aggregations']['2']['buckets'][0]
+  - name: data transfer to Elastic
+    assert:
+      that: result_data.json['aggregations']['2']['buckets'][0] is defined

@@ -1,0 +1,11 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    filebeat_version: "7.14.0"
+    el_instance_ip: "51.250.1.224"
+    kb_instance_ip: "51.250.0.65"
+  tasks:
+    - name: "Include filebeat-role"
+      include_role:
+        name: "filebeat-role"
