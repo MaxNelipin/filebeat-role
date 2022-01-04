@@ -2,7 +2,6 @@
  # hosts: ["http://{{ el_instance_ip }}:9200"]
 #setup.kibana:
  # host: "http://{{ kb_instance_ip }}:5601"
- output.logstash:
-  # The Logstash hosts
+output.logstash:
   hosts: ["{{ el_instance_ip }}:5044"]
 filebeat.config.modules.path: ${path.config}/modules.d/*.yml
